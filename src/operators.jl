@@ -15,13 +15,37 @@ terms of this function and are provided automatically.
 """
 abstract type AbstractOperator{BL<:Basis,BR<:Basis} end
 
+
+"""
+Fundamental type for Operators.
+"""
+mutable struct Operator{BL<:Basis,BR<:Basis,T} <: AbstractOperator{BL,BR}
+    basis_l::BL
+    basis_r::BR
+    data::T
+    function Operator{BL,BR,T}(basis_l::BL,basis_r::BR,data::T) where {BL<:Basis,BR<:Basis,T}
+        if !(length(basis_l) == size(data, 1) && length(basis_r) == size(data, 2))
+            throw(DimensionMismatch())
+        end
+        new{BL,BR,T}(basis_l,basis_r,data)
+    end
+end
+Operator(basis_l::BL,basis_r::BR,data::T) where {BL<:Basis,BR<:Basis,T} = Operator{BL,BR,T}(basis_l,basis_r,data)
+Operator{BL,BR}(basis_l::BL,basis_r::BR,data::T) where {BL<:Basis,BR<:Basis,T} = Operator{BL,BR,T}(basis_l,basis_r,data)
+Operator(basis::Basis,data) = Operator(basis,basis,data)
+
+# const AdjointOperator{BL<:Basis,BR<:Basis,T} = Operator{BR,BL,Adjoint{<:Number,T}}
+const DenseOperator{BL<:Basis,BR<:Basis,T<:Matrix} = Union{Operator{BL,BR,T},Operator{BR,BL,Adjoint{<:Number,T}}}
+const SparseOperator{BL<:Basis,BR<:Basis,T<:SparseMatrixCSC} = Union{Operator{BL,BR,T},Operator{BR,BL,Adjoint{<:Number,T}}}
+
 """
 Abstract type for operators with a data field.
 
 This is an abstract type for operators that have a direct matrix representation
 stored in their `.data` field.
 """
-abstract type DataOperator{BL<:Basis,BR<:Basis} <: AbstractOperator{BL,BR} end
+const DataOperator{BL<:Basis,BR<:Basis,T} = Union{DenseOperator{BL,BR,T},SparseOperator{BL,BR,T}}
+
 
 
 # Common error messages

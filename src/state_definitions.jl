@@ -14,7 +14,7 @@ end
 
 Calculate a random unnormalized dense operator.
 """
-randoperator(b1::Basis, b2::Basis) = DenseOperator(b1, b2, rand(ComplexF64, length(b1), length(b2)))
+randoperator(b1::Basis, b2::Basis) = Operator(b1, b2, rand(ComplexF64, length(b1), length(b2)))
 randoperator(b::Basis) = randoperator(b, b)
 
 """
@@ -50,5 +50,5 @@ end
 Passive state ``π`` of ``ρ``. IncreasingEigenenergies=true means that higher indices correspond to higher energies.
 """
 function passive_state(rho::DenseOperator,IncreasingEigenenergies::Bool=true)
-    return DenseOperator(basis(rho),diagm(0 => sort!(abs.(eigvals(rho.data)),rev=IncreasingEigenenergies)))
+    return Operator(basis(rho),diagm(0 => sort!(abs.(eigvals(rho.data)),rev=IncreasingEigenenergies)))
 end

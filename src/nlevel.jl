@@ -29,7 +29,7 @@ function transition(b::NLevelBasis, to::Int, from::Int)
     if from < 1 || b.N < from
         throw(BoundsError("'from' index has to be between 1 and b.N"))
     end
-    op = SparseOperator(b)
+    op = Operator(b,b,spzeros(ComplexF64,b.N,b.N))
     op.data[to, from] = 1.
     op
 end
