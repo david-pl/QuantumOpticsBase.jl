@@ -10,6 +10,7 @@ export bases, Basis, GenericBasis, CompositeBasis, basis,
             identityoperator, ptrace, embed, dense, tr, sparse,
         operators_dense, DenseOperator, projector, dm,
         operators_sparse, SparseOperator, diagonaloperator,
+        LazyOperator, ApplyOperator,
         # operators_lazysum, LazySum,
         # operators_lazyproduct, LazyProduct,
         # operators_lazytensor, LazyTensor,
@@ -40,6 +41,7 @@ include("operators.jl")
 include("operators_dense.jl")
 include("sparsematrix.jl")
 include("operators_sparse.jl")
+include("operators_lazy.jl")
 # include("operators_lazysum.jl")
 # include("operators_lazyproduct.jl")
 # include("operators_lazytensor.jl")
