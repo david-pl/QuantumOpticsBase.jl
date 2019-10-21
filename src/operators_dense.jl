@@ -257,25 +257,39 @@ gemm!(alpha, a::DenseOperator{B1,B2}, b::DenseOperator{B2,B3}, beta, result::Den
 gemv!(alpha, a::DenseOperator{B1,B2}, b::Ket{B2}, beta, result::Ket{B1}) where {B1<:Basis,B2<:Basis} = gemv!(convert(ComplexF64, alpha), a.data, b.data, convert(ComplexF64, beta), result.data)
 gemv!(alpha, a::Bra{B1}, b::DenseOperator{B1,B2}, beta, result::Bra{B2}) where {B1<:Basis,B2<:Basis} = gemv!(convert(ComplexF64, alpha), a.data, b.data, convert(ComplexF64, beta), result.data)
 
-
-# Multiplication for Operators in terms of their gemv! implementation
-function gemm!(alpha, M::AbstractOperator{B1,B2}, b::DenseOperator{B2,B3}, beta, result::DenseOperator{B1,B3}) where {B1<:Basis,B2<:Basis,B3<:Basis}
-    for i=1:size(b.data, 2)
-        bket = Ket(b.basis_l, b.data[:,i])
-        resultket = Ket(M.basis_l, result.data[:,i])
-        gemv!(alpha, M, bket, beta, resultket)
-        result.data[:,i] = resultket.data
-    end
+# Generic Fallback
+function gemm!(alpha, a::Operator{B1,B2,<:AbstractMatrix}, b::Operator{B2,B3,<:AbstractMatrix}, beta, result::Operator{B1,B3,<:AbstractMatrix}) where {B1<:Basis,B2<:Basis,B3<:Basis}
+    result.data .= alpha.*a.data*b.data .+ beta.*result.data
+    return nothing
+end
+function gemv!(alpha, a::Operator{B1,B2,<:AbstractMatrix}, b::Ket{B2}, beta, result::Ket{B1}) where {B1<:Basis,B2<:Basis}
+    result.data .= alpha.*a.data*b.data .+ beta.*result.data
+    return nothing
+end
+function gemv!(alpha, a::Bra{B1}, b::Operator{B1,B2,<:AbstractMatrix}, beta, result::Bra{B2}) where {B1<:Basis,B2<:Basis}
+    result.data .= alpha.*a.data'*b.data .+ beta.*result.data
+    return nothing
 end
 
-function gemm!(alpha, b::DenseOperator{B1,B2}, M::AbstractOperator{B2,B3}, beta, result::DenseOperator{B1,B3}) where {B1<:Basis,B2<:Basis,B3<:Basis}
-    for i=1:size(b.data, 1)
-        bbra = Bra(b.basis_r, vec(b.data[i,:]))
-        resultbra = Bra(M.basis_r, vec(result.data[i,:]))
-        gemv!(alpha, bbra, M, beta, resultbra)
-        result.data[i,:] = resultbra.data
-    end
-end
+
+# # Multiplication for Operators in terms of their gemv! implementation
+# function gemm!(alpha, M::AbstractOperator{B1,B2}, b::DenseOperator{B2,B3}, beta, result::DenseOperator{B1,B3}) where {B1<:Basis,B2<:Basis,B3<:Basis}
+#     for i=1:size(b.data, 2)
+#         bket = Ket(b.basis_l, b.data[:,i])
+#         resultket = Ket(M.basis_l, result.data[:,i])
+#         gemv!(alpha, M, bket, beta, resultket)
+#         result.data[:,i] = resultket.data
+#     end
+# end
+#
+# function gemm!(alpha, b::DenseOperator{B1,B2}, M::AbstractOperator{B2,B3}, beta, result::DenseOperator{B1,B3}) where {B1<:Basis,B2<:Basis,B3<:Basis}
+#     for i=1:size(b.data, 1)
+#         bbra = Bra(b.basis_r, vec(b.data[i,:]))
+#         resultbra = Bra(M.basis_r, vec(result.data[i,:]))
+#         gemv!(alpha, bbra, M, beta, resultbra)
+#         result.data[i,:] = resultbra.data
+#     end
+# end
 
 # Broadcasting
 Base.size(A::DataOperator) = size(A.data)
