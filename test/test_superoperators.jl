@@ -23,18 +23,18 @@ s_sparse = sparse(s_)
 @test isa(s_sparse, QuantumOpticsBase.SparseSuperOperatorType)
 @test s_sparse.data[1,1] == 1
 
-s = SparseSuperOperator((b1, b2), (b3, b4))
+s = sparse(SuperOperator((b1, b2), (b3, b4)))
 s_ = sparse(s)
 s_.data[1,1] = 1
 @test s.data[1,1] == 0
 s_dense = dense(s_)
-@test isa(s_dense, DenseSuperOperator)
+@test isa(s_dense, QuantumOpticsBase.DenseSuperOperatorType)
 @test s_dense.data[1,1] == 1
 
 # Test length
 b1 = GenericBasis(3)
 b2 = GenericBasis(5)
-op = DenseOperator(b1, b2)
+op = Operator(b1, b2)
 S = spre(op)
 @test length(S) == length(S.data) == (3*5)^2
 
@@ -44,74 +44,74 @@ b2 = GenericBasis(5)
 b3 = GenericBasis(5)
 b4 = GenericBasis(3)
 
-d1 = DenseSuperOperator((b1, b2), (b3, b4))
-d2 = DenseSuperOperator((b3, b4), (b1, b2))
-s1 = SparseSuperOperator((b1, b2), (b3, b4))
-s2 = SparseSuperOperator((b3, b4), (b1, b2))
+d1 = SuperOperator((b1, b2), (b3, b4))
+d2 = SuperOperator((b3, b4), (b1, b2))
+s1 = sparse(d1)
+s2 = sparse(d2)
 
 x = d1*d2
-@test isa(x, DenseSuperOperator)
+@test isa(x, QuantumOpticsBase.DenseSuperOperatorType)
 @test x.basis_l == x.basis_r == (b1, b2)
 
 x = s1*s2
-@test isa(x, SparseSuperOperator)
+@test isa(x, QuantumOpticsBase.SparseSuperOperatorType)
 @test x.basis_l == x.basis_r == (b1, b2)
 
 x = d1*s2
-@test isa(x, DenseSuperOperator)
+@test isa(x, QuantumOpticsBase.DenseSuperOperatorType)
 @test x.basis_l == x.basis_r == (b1, b2)
 
 x = s1*d2
-@test isa(x, DenseSuperOperator)
+@test isa(x, QuantumOpticsBase.DenseSuperOperatorType)
 @test x.basis_l == x.basis_r == (b1, b2)
 
 x = d1*3
-@test isa(x, DenseSuperOperator)
+@test isa(x, QuantumOpticsBase.DenseSuperOperatorType)
 @test x.basis_l == (b1, b2)
 @test x.basis_r == (b3, b4)
 
 x = 2.5*s1
-@test isa(x, SparseSuperOperator)
+@test isa(x, QuantumOpticsBase.SparseSuperOperatorType)
 @test x.basis_l == (b1, b2)
 @test x.basis_r == (b3, b4)
 
 x = d1 + d1
-@test isa(x, DenseSuperOperator)
+@test isa(x, QuantumOpticsBase.DenseSuperOperatorType)
 @test x.basis_l == (b1, b2)
 @test x.basis_r == (b3, b4)
 
 x = s1 + s1
-@test isa(x, SparseSuperOperator)
+@test isa(x, QuantumOpticsBase.SparseSuperOperatorType)
 @test x.basis_l == (b1, b2)
 @test x.basis_r == (b3, b4)
 
 x = d1 + s1
-@test isa(x, DenseSuperOperator)
+@test isa(x, QuantumOpticsBase.DenseSuperOperatorType)
 @test x.basis_l == (b1, b2)
 @test x.basis_r == (b3, b4)
 
 x = d1 - d1
-@test isa(x, DenseSuperOperator)
+@test isa(x, QuantumOpticsBase.DenseSuperOperatorType)
 @test x.basis_l == (b1, b2)
 @test x.basis_r == (b3, b4)
 
 x = s1 - s1
-@test isa(x, SparseSuperOperator)
+@test isa(x, QuantumOpticsBase.SparseSuperOperatorType)
 @test x.basis_l == (b1, b2)
 @test x.basis_r == (b3, b4)
 
 x = d1 - s1
-@test isa(x, DenseSuperOperator)
+@test isa(x, QuantumOpticsBase.DenseSuperOperatorType)
 @test x.basis_l == (b1, b2)
 @test x.basis_r == (b3, b4)
 
 x = -d1
-@test isa(x, DenseSuperOperator)
+@test isa(x, QuantumOpticsBase.DenseSuperOperatorType)
 @test x.basis_l == (b1, b2)
 @test x.basis_r == (b3, b4)
 
 x = -s1
-@test isa(x, SparseSuperOperator)
+@test isa(x, QuantumOpticsBase.SparseSuperOperatorType)
 @test x.basis_l == (b1, b2)
 @test x.basis_r == (b3, b4)
 
@@ -149,8 +149,8 @@ J = [Ja, Jc]
 ρ₀ = dm(Ψ₀)
 
 
-op1 = DenseOperator(spinbasis, [1.2+0.3im 0.7+1.2im;0.3+0.1im 0.8+3.2im])
-op2 = DenseOperator(spinbasis, [0.2+0.1im 0.1+2.3im; 0.8+4.0im 0.3+1.4im])
+op1 = Operator(spinbasis, [1.2+0.3im 0.7+1.2im;0.3+0.1im 0.8+3.2im])
+op2 = Operator(spinbasis, [0.2+0.1im 0.1+2.3im; 0.8+4.0im 0.3+1.4im])
 @test tracedistance(spre(op1)*op2, op1*op2) < 1e-12
 @test tracedistance(spost(op1)*op2, op2*op1) < 1e-12
 
@@ -173,7 +173,7 @@ end
 @test dense(spre(op1)) == spre(op1)
 
 @test L/2.0 == 0.5*L == L*0.5
-@test -L == SparseSuperOperator(L.basis_l, L.basis_r, -L.data)
+@test -L == sparse(SuperOperator(L.basis_l, L.basis_r, -L.data))
 
 @test_throws AssertionError liouvillian(H, J; rates=zeros(4, 4))
 
@@ -183,7 +183,7 @@ rates = diagm(0 => [1.0, 1.0])
 # Test broadcasting
 @test L .+ L == L + L
 Ldense = dense(L)
-@test isa(L .+ Ldense, DenseSuperOperator)
+@test isa(L .+ Ldense, QuantumOpticsBase.DenseSuperOperatorType)
 L_ = copy(L)
 L .+= L
 @test L == 2*L_
@@ -193,7 +193,7 @@ Ldense_ = dense(L_)
 Ldense .+= Ldense
 @test Ldense == 2*Ldense_
 Ldense .+= L
-@test isa(Ldense, DenseSuperOperator)
+@test isa(Ldense, QuantumOpticsBase.DenseSuperOperatorType)
 @test isapprox(Ldense.data, 5*Ldense_.data)
 @test_throws ErrorException cos.(Ldense)
 @test_throws ErrorException cos.(L)
