@@ -35,6 +35,7 @@ Operator{BL,BR}(basis_l::BL,basis_r::BR,data::T) where {BL<:Basis,BR<:Basis,T} =
 Operator(basis::Basis,data) = Operator(basis,basis,data)
 
 # const AdjointOperator{BL<:Basis,BR<:Basis,T} = Operator{BR,BL,Adjoint{<:Number,T}}
+# TODO: Rename the following consts and deprecate DenseOperator and SparseOperator
 const DenseOperator{BL<:Basis,BR<:Basis,T<:Matrix} = Union{Operator{BL,BR,T},Operator{BR,BL,Adjoint{<:Number,T}}}
 const SparseOperator{BL<:Basis,BR<:Basis,T<:SparseMatrixCSC} = Union{Operator{BL,BR,T},Operator{BR,BL,Adjoint{<:Number,T}}}
 

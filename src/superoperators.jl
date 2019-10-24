@@ -12,18 +12,18 @@ A_{bl_1,bl_2} = S_{(bl_1,bl_2) ↔ (br_1,br_2)} B_{br_1,br_2}
 A_{br_1,br_2} = B_{bl_1,bl_2} S_{(bl_1,bl_2) ↔ (br_1,br_2)}
 ```
 """
-abstract type SuperOperator{B1<:Tuple{Basis,Basis},B2<:Tuple{Basis,Basis}} end
+abstract type AbstractSuperOperator{B1<:Tuple{Basis,Basis},B2<:Tuple{Basis,Basis}} end
 
 """
-    DenseSuperOperator(b1[, b2, data])
+    SuperOperator(b1[, b2, data])
 
-SuperOperator stored as dense matrix.
+SuperOperator stored as matrix.
 """
-mutable struct DenseSuperOperator{B1<:Tuple{Basis,Basis},B2<:Tuple{Basis,Basis},T<:Matrix{ComplexF64}} <: SuperOperator{B1,B2}
+mutable struct SuperOperator{B1<:Tuple{Basis,Basis},B2<:Tuple{Basis,Basis},T} <: AbstractSuperOperator{B1,B2}
     basis_l::B1
     basis_r::B2
     data::T
-    function DenseSuperOperator{BL,BR,T}(basis_l::BL, basis_r::BR, data::T) where {BL<:Tuple{Basis,Basis},BR<:Tuple{Basis,Basis},T<:Matrix{ComplexF64}}
+    function SuperOperator{BL,BR,T}(basis_l::BL, basis_r::BR, data::T) where {BL<:Tuple{Basis,Basis},BR<:Tuple{Basis,Basis},T}
         if length(basis_l[1])*length(basis_l[2]) != size(data, 1) ||
            length(basis_r[1])*length(basis_r[2]) != size(data, 2)
             throw(DimensionMismatch())
@@ -31,59 +31,25 @@ mutable struct DenseSuperOperator{B1<:Tuple{Basis,Basis},B2<:Tuple{Basis,Basis},
         new(basis_l, basis_r, data)
     end
 end
-DenseSuperOperator{BL,BR}(basis_l::BL, basis_r::BR, data::T) where {BL<:Tuple{Basis,Basis},BR<:Tuple{Basis,Basis},T<:Matrix{ComplexF64}} = DenseSuperOperator{BL,BR,T}(basis_l, basis_r, data)
-DenseSuperOperator(basis_l::BL, basis_r::BR, data::T) where {BL<:Tuple{Basis,Basis},BR<:Tuple{Basis,Basis},T<:Matrix{ComplexF64}} = DenseSuperOperator{BL,BR,T}(basis_l, basis_r, data)
+SuperOperator{BL,BR}(basis_l::BL, basis_r::BR, data::T) where {BL<:Tuple{Basis,Basis},BR<:Tuple{Basis,Basis},T} = SuperOperator{BL,BR,T}(basis_l, basis_r, data)
+SuperOperator(basis_l::BL, basis_r::BR, data::T) where {BL<:Tuple{Basis,Basis},BR<:Tuple{Basis,Basis},T} = SuperOperator{BL,BR,T}(basis_l, basis_r, data)
 
-function DenseSuperOperator(basis_l::Tuple{Basis, Basis}, basis_r::Tuple{Basis, Basis})
+function SuperOperator(basis_l::Tuple{Basis, Basis}, basis_r::Tuple{Basis, Basis})
     Nl = length(basis_l[1])*length(basis_l[2])
     Nr = length(basis_r[1])*length(basis_r[2])
     data = zeros(ComplexF64, Nl, Nr)
-    DenseSuperOperator(basis_l, basis_r, data)
+    SuperOperator(basis_l, basis_r, data)
 end
 
-
-"""
-    SparseSuperOperator(b1[, b2, data])
-
-SuperOperator stored as sparse matrix.
-"""
-mutable struct SparseSuperOperator{B1<:Tuple{Basis,Basis},B2<:Tuple{Basis,Basis},T<:SparseMatrixCSC{ComplexF64,Int}} <: SuperOperator{B1,B2}
-    basis_l::B1
-    basis_r::B2
-    data::T
-    function SparseSuperOperator{B1,B2,T}(basis_l::B1, basis_r::B2, data::T) where {B1<:Tuple{Basis,Basis},B2<:Tuple{Basis,Basis},T<:SparseMatrixCSC{ComplexF64,Int}}
-        if length(basis_l[1])*length(basis_l[2]) != size(data, 1) ||
-           length(basis_r[1])*length(basis_r[2]) != size(data, 2)
-            throw(DimensionMismatch())
-        end
-        new(basis_l, basis_r, data)
-    end
-end
-SparseSuperOperator(basis_l::B1, basis_r::B2, data::T) where {B1<:Tuple{Basis,Basis},B2<:Tuple{Basis,Basis},T<:SparseMatrixCSC{ComplexF64,Int}} = SparseSuperOperator{B1,B2,T}(basis_l, basis_r, data)
-
-function SparseSuperOperator(basis_l::Tuple{Basis, Basis}, basis_r::Tuple{Basis, Basis})
-    Nl = length(basis_l[1])*length(basis_l[2])
-    Nr = length(basis_r[1])*length(basis_r[2])
-    data = spzeros(ComplexF64, Nl, Nr)
-    SparseSuperOperator(basis_l, basis_r, data)
-end
-
-SuperOperator(basis_l, basis_r, data::SparseMatrixCSC{ComplexF64, Int}) = SparseSuperOperator(basis_l, basis_r, data)
-SuperOperator(basis_l, basis_r, data::Matrix{ComplexF64}) = DenseSuperOperator(basis_l, basis_r, data)
-SuperOperator{B1,B2}(basis_l::B1, basis_r::B2, data::SparseMatrixCSC{ComplexF64, Int}) where {B1<:Tuple{Basis,Basis},B2<:Tuple{Basis,Basis}} = SparseSuperOperator(basis_l, basis_r, data)
-SuperOperator{B1,B2}(basis_l::B1, basis_r::B2, data::Matrix{ComplexF64}) where {B1<:Tuple{Basis,Basis},B2<:Tuple{Basis,Basis}} = DenseSuperOperator(basis_l, basis_r, data)
-
+# TODO: Deprecate DenseSuperOperator and SparseSuperOperator
 
 Base.copy(a::T) where {T<:SuperOperator} = T(a.basis_l, a.basis_r, copy(a.data))
 
-dense(a::SparseSuperOperator) = DenseSuperOperator(a.basis_l, a.basis_r, Matrix(a.data))
-dense(a::DenseSuperOperator) = copy(a)
+dense(a::SuperOperator) = SuperOperator(a.basis_l, a.basis_r, Matrix(a.data))
+sparse(a::SuperOperator) = SuperOperator(a.basis_l, a.basis_r, sparse(a.data))
 
-sparse(a::DenseSuperOperator) = SparseSuperOperator(a.basis_l, a.basis_r, sparse(a.data))
-sparse(a::SparseSuperOperator) = copy(a)
-
-==(a::T, b::T) where {T<:SuperOperator} = a.data == b.data
-==(a::SuperOperator, b::SuperOperator) = false
+==(a::SuperOperator{B1,B2}, b::SuperOperator{B1,B2}) where {B1,B2} = a.data == b.data
+==(a::AbstractSuperOperator, b::AbstractSuperOperator) = false
 
 Base.length(a::SuperOperator) = length(a.basis_l[1])*length(a.basis_l[2])*length(a.basis_r[1])*length(a.basis_r[2])
 samebases(a::SuperOperator, b::SuperOperator) = samebases(a.basis_l[1], b.basis_l[1]) && samebases(a.basis_l[2], b.basis_l[2]) &&
@@ -93,30 +59,26 @@ multiplicable(a::SuperOperator, b::AbstractOperator) = multiplicable(a.basis_r[1
 
 
 # Arithmetic operations
-function *(a::SuperOperator{B1,B2}, b::DenseOperator{BL,BR}) where {BL<:Basis,BR<:Basis,B1<:Tuple{Basis,Basis},B2<:Tuple{BL,BR}}
+function *(a::SuperOperator{B1,B2}, b::Operator{BL,BR}) where {BL<:Basis,BR<:Basis,B1<:Tuple{Basis,Basis},B2<:Tuple{BL,BR}}
     data = a.data*reshape(b.data, length(b.data))
-    return DenseOperator(a.basis_l[1], a.basis_l[2], reshape(data, length(a.basis_l[1]), length(a.basis_l[2])))
-end
-function *(a::SuperOperator{B1,B2}, b::SparseOperator{BL,BR}) where {BL<:Basis,BR<:Basis,B1<:Tuple{Basis,Basis},B2<:Tuple{BL,BR}}
-    data = a.data*reshape(b.data, length(b.data))
-    return SparseOperator(a.basis_l[1], a.basis_l[2], reshape(data, length(a.basis_l[1]), length(a.basis_l[2])))
+    return Operator(a.basis_l[1], a.basis_l[2], reshape(data, length(a.basis_l[1]), length(a.basis_l[2])))
 end
 
 function *(a::SuperOperator{B1,B2}, b::SuperOperator{B2,B3}) where {B1<:Tuple{Basis,Basis},B2<:Tuple{Basis,Basis},B3<:Tuple{Basis,Basis}}
     return SuperOperator{B1,B3}(a.basis_l, b.basis_r, a.data*b.data)
 end
 
-*(a::T, b::Number) where T<:SuperOperator = T(a.basis_l, a.basis_r, a.data*b)
-*(a::Number, b::T) where T<:SuperOperator = T(b.basis_l, b.basis_r, a*b.data)
+*(a::SuperOperator, b::Number) = SuperOperator(a.basis_l, a.basis_r, a.data .*b)
+*(a::Number, b::SuperOperator) = SuperOperator(b.basis_l, b.basis_r, a.* b.data)
 
-/(a::T, b::Number) where T<:SuperOperator = T(a.basis_l, a.basis_r, a.data/b)
+/(a::SuperOperator, b::Number) = SuperOperator(a.basis_l, a.basis_r, a.data ./b)
 
 +(a::SuperOperator{B1,B2}, b::SuperOperator{B1,B2}) where {B1<:Tuple{Basis,Basis},B2<:Tuple{Basis,Basis}} = SuperOperator{B1,B2}(a.basis_l, a.basis_r, a.data+b.data)
-+(a::SuperOperator, b::SuperOperator) = throw(IncompatibleBases())
++(a::AbstractSuperOperator, b::AbstractSuperOperator) = throw(IncompatibleBases())
 
 -(a::SuperOperator{B1,B2}, b::SuperOperator{B1,B2}) where {B1<:Tuple{Basis,Basis},B2<:Tuple{Basis,Basis}} = SuperOperator{B1,B2}(a.basis_l, a.basis_r, a.data-b.data)
 -(a::SuperOperator) = SuperOperator(a.basis_l, a.basis_r, -a.data)
--(a::SuperOperator, b::SuperOperator) = throw(IncompatibleBases())
+-(a::AbstractSuperOperator, b::AbstractSuperOperator) = throw(IncompatibleBases())
 
 """
     spre(op)
@@ -204,29 +166,32 @@ function liouvillian(H::AbstractOperator, J::Vector;
 end
 
 """
-    exp(op::DenseSuperOperator)
+    exp(op::SuperOperator)
 
 Operator exponential which can for example used to calculate time evolutions.
 """
-Base.exp(op::DenseSuperOperator) = DenseSuperOperator(op.basis_l, op.basis_r, exp(op.data))
+Base.exp(op::SuperOperator) = SuperOperator(op.basis_l, op.basis_r, exp(op.data))
 
 # Array-like functions
-Base.size(A::SuperOperator) = size(A.data)
-@inline Base.axes(A::SuperOperator) = axes(A.data)
-Base.ndims(A::SuperOperator) = 2
-Base.ndims(::Type{<:SuperOperator}) = 2
+Base.size(A::AbstractSuperOperator) = size(A.data)
+@inline Base.axes(A::AbstractSuperOperator) = axes(A.data)
+Base.ndims(A::AbstractSuperOperator) = 2
+Base.ndims(::Type{<:AbstractSuperOperator}) = 2
 
 # Broadcasting
-Base.broadcastable(A::SuperOperator) = A
+Base.broadcastable(A::AbstractSuperOperator) = A
 
 # Custom broadcasting styles
 abstract type SuperOperatorStyle{BL<:Tuple{Basis,Basis},BR<:Tuple{Basis,Basis}} <: Broadcast.BroadcastStyle end
 struct DenseSuperOperatorStyle{BL<:Tuple{Basis,Basis},BR<:Tuple{Basis,Basis}} <: SuperOperatorStyle{BL,BR} end
 struct SparseSuperOperatorStyle{BL<:Tuple{Basis,Basis},BR<:Tuple{Basis,Basis}} <: SuperOperatorStyle{BL,BR} end
 
+const DenseSuperOperatorType{BL,BR} = SuperOperator{BL,BR,<:Matrix}
+const SparseSuperOperatorType{BL,BR} = SuperOperator{BL,BR,<:SparseMatrixCSC}
+
 # Style precedence rules
-Broadcast.BroadcastStyle(::Type{<:DenseSuperOperator{BL,BR}}) where {BL<:Tuple{Basis,Basis},BR<:Tuple{Basis,Basis}} = DenseSuperOperatorStyle{BL,BR}()
-Broadcast.BroadcastStyle(::Type{<:SparseSuperOperator{BL,BR}}) where {BL<:Tuple{Basis,Basis},BR<:Tuple{Basis,Basis}} = SparseSuperOperatorStyle{BL,BR}()
+Broadcast.BroadcastStyle(::Type{<:DenseSuperOperatorType{BL,BR}}) where {BL<:Tuple{Basis,Basis},BR<:Tuple{Basis,Basis}} = DenseSuperOperatorStyle{BL,BR}()
+Broadcast.BroadcastStyle(::Type{<:SparseSuperOperatorType{BL,BR}}) where {BL<:Tuple{Basis,Basis},BR<:Tuple{Basis,Basis}} = SparseSuperOperatorStyle{BL,BR}()
 Broadcast.BroadcastStyle(::DenseSuperOperatorStyle{B1,B2}, ::SparseSuperOperatorStyle{B1,B2}) where {B1<:Tuple{Basis,Basis},B2<:Tuple{Basis,Basis}} = DenseSuperOperatorStyle{B1,B2}()
 Broadcast.BroadcastStyle(::DenseSuperOperatorStyle{B1,B2}, ::DenseSuperOperatorStyle{B3,B4}) where {B1<:Tuple{Basis,Basis},B2<:Tuple{Basis,Basis},B3<:Tuple{Basis,Basis},B4<:Tuple{Basis,Basis}} = throw(IncompatibleBases())
 Broadcast.BroadcastStyle(::SparseSuperOperatorStyle{B1,B2}, ::SparseSuperOperatorStyle{B3,B4}) where {B1<:Tuple{Basis,Basis},B2<:Tuple{Basis,Basis},B3<:Tuple{Basis,Basis},B4<:Tuple{Basis,Basis}} = throw(IncompatibleBases())
@@ -238,7 +203,7 @@ Broadcast.BroadcastStyle(::DenseSuperOperatorStyle{B1,B2}, ::SparseSuperOperator
     bl,br = find_basis(bcf.args)
     bc_ = Broadcasted_restrict_f(bcf.f, bcf.args, axes(bcf))
     # TODO: remove convert
-    return DenseSuperOperator{BL,BR}(bl, br, convert(Matrix{ComplexF64}, copy(bc_)))
+    return SuperOperator{BL,BR}(bl, br, convert(Matrix{ComplexF64}, copy(bc_)))
 end
 @inline function Base.copy(bc::Broadcast.Broadcasted{Style,Axes,F,Args}) where {BL<:Tuple{Basis,Basis},BR<:Tuple{Basis,Basis},Style<:SparseSuperOperatorStyle{BL,BR},Axes,F,Args<:Tuple}
     bcf = Broadcast.flatten(bc)

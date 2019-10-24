@@ -6,8 +6,8 @@ using SparseArrays, LinearAlgebra
 
 # Test creation
 b = GenericBasis(3)
-@test_throws DimensionMismatch DenseSuperOperator((b, b), (b, b), zeros(ComplexF64, 3, 3))
-@test_throws DimensionMismatch SparseSuperOperator((b, b), (b, b), spzeros(ComplexF64, 3, 3))
+@test_throws DimensionMismatch SuperOperator((b, b), (b, b), zeros(ComplexF64, 3, 3))
+@test_throws DimensionMismatch SuperOperator((b, b), (b, b), spzeros(ComplexF64, 3, 3))
 
 # Test copy, sparse and dense
 b1 = GenericBasis(2)
@@ -15,12 +15,12 @@ b2 = GenericBasis(7)
 b3 = GenericBasis(5)
 b4 = GenericBasis(3)
 
-s = DenseSuperOperator((b1, b2), (b3, b4))
+s = SuperOperator((b1, b2), (b3, b4))
 s_ = dense(s)
 s_.data[1,1] = 1
 @test s.data[1,1] == 0
 s_sparse = sparse(s_)
-@test isa(s_sparse, SparseSuperOperator)
+@test isa(s_sparse, QuantumOpticsBase.SparseSuperOperatorType)
 @test s_sparse.data[1,1] == 1
 
 s = SparseSuperOperator((b1, b2), (b3, b4))

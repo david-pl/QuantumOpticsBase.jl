@@ -14,8 +14,8 @@ export bases, Basis, GenericBasis, CompositeBasis, basis,
         # operators_lazysum, LazySum,
         # operators_lazyproduct, LazyProduct,
         # operators_lazytensor, LazyTensor,
-        # superoperators, SuperOperator, DenseSuperOperator, SparseSuperOperator,
-        #         spre, spost, liouvillian,
+        superoperators, SuperOperator, #DenseSuperOperator, SparseSuperOperator,
+                spre, spost, liouvillian,
         fock, FockBasis, number, destroy, create,
                 fockstate, coherentstate, coherentstate!, displace,
         randstate, randoperator, thermalstate, coherentthermalstate, phase_average, passive_state,
@@ -45,7 +45,7 @@ include("operators_lazy.jl")
 # include("operators_lazysum.jl")
 # include("operators_lazyproduct.jl")
 # include("operators_lazytensor.jl")
-# include("superoperators.jl")
+include("superoperators.jl")
 include("spin.jl")
 include("fock.jl")
 include("state_definitions.jl")

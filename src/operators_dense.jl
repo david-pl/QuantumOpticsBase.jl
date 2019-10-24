@@ -247,11 +247,11 @@ gemm!(alpha, a::Matrix{ComplexF64}, b::Matrix{ComplexF64}, beta, result::Matrix{
 gemv!(alpha, a::Matrix{ComplexF64}, b::Vector{ComplexF64}, beta, result::Vector{ComplexF64}) = BLAS.gemv!('N', convert(ComplexF64, alpha), a, b, convert(ComplexF64, beta), result)
 gemv!(alpha, a::Vector{ComplexF64}, b::Matrix{ComplexF64}, beta, result::Vector{ComplexF64}) = BLAS.gemv!('T', convert(ComplexF64, alpha), b, a, convert(ComplexF64, beta), result)
 
-gemm!(alpha, a::Adjoint{ComplexF64,<:Matrix}, b::Adjoint{ComplexF64,<:Matrix}, beta, result::Matrix{ComplexF64}) = BLAS.gemm!('C', 'C', convert(ComplexF64, alpha), a, b, convert(ComplexF64, beta), result)
-gemm!(alpha, a::Adjoint{ComplexF64,<:Matrix}, b::Matrix{ComplexF64}, beta, result::Matrix{ComplexF64}) = BLAS.gemm!('C', 'N', convert(ComplexF64, alpha), a, b, convert(ComplexF64, beta), result)
-gemm!(alpha, a::Matrix{ComplexF64}, b::Adjoint{ComplexF64,<:Matrix}, beta, result::Matrix{ComplexF64}) = BLAS.gemm!('N', 'C', convert(ComplexF64, alpha), a, b, convert(ComplexF64, beta), result)
-gemv!(alpha, a::Adjoint{ComplexF64,<:Matrix}, b::Vector{ComplexF64}, beta, result::Vector{ComplexF64}) = BLAS.gemv!('C', convert(ComplexF64, alpha), a, b, convert(ComplexF64, beta), result)
-gemv!(alpha, a::Vector{ComplexF64}, b::Adjoint{ComplexF64,<:Matrix}, beta, result::Vector{ComplexF64}) = BLAS.gemv!('T', convert(ComplexF64, alpha), b, a, convert(ComplexF64, beta), result)
+# gemm!(alpha, a::Adjoint{ComplexF64,<:Matrix}, b::Adjoint{ComplexF64,<:Matrix}, beta, result::Matrix{ComplexF64}) = BLAS.gemm!('C', 'C', convert(ComplexF64, alpha), a, b, convert(ComplexF64, beta), result)
+# gemm!(alpha, a::Adjoint{ComplexF64,<:Matrix}, b::Matrix{ComplexF64}, beta, result::Matrix{ComplexF64}) = BLAS.gemm!('C', 'N', convert(ComplexF64, alpha), a, b, convert(ComplexF64, beta), result)
+# gemm!(alpha, a::Matrix{ComplexF64}, b::Adjoint{ComplexF64,<:Matrix}, beta, result::Matrix{ComplexF64}) = BLAS.gemm!('N', 'C', convert(ComplexF64, alpha), a, b, convert(ComplexF64, beta), result)
+# gemv!(alpha, a::Adjoint{ComplexF64,<:Matrix}, b::Vector{ComplexF64}, beta, result::Vector{ComplexF64}) = BLAS.gemv!('C', convert(ComplexF64, alpha), a, b, convert(ComplexF64, beta), result)
+# gemv!(alpha, a::Vector{ComplexF64}, b::Adjoint{ComplexF64,<:Matrix}, beta, result::Vector{ComplexF64}) = BLAS.gemv!('T', convert(ComplexF64, alpha), b, a, convert(ComplexF64, beta), result)
 
 gemm!(alpha, a::DenseOperator{B1,B2}, b::DenseOperator{B2,B3}, beta, result::DenseOperator{B1,B3}) where {B1<:Basis,B2<:Basis,B3<:Basis} = gemm!(convert(ComplexF64, alpha), a.data, b.data, convert(ComplexF64, beta), result.data)
 gemv!(alpha, a::DenseOperator{B1,B2}, b::Ket{B2}, beta, result::Ket{B1}) where {B1<:Basis,B2<:Basis} = gemv!(convert(ComplexF64, alpha), a.data, b.data, convert(ComplexF64, beta), result.data)
