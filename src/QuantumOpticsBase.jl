@@ -21,17 +21,17 @@ export bases, Basis, GenericBasis, CompositeBasis, basis,
         randstate, randoperator, thermalstate, coherentthermalstate, phase_average, passive_state,
         spin, SpinBasis, sigmax, sigmay, sigmaz, sigmap, sigmam, spinup, spindown,
         subspace, SubspaceBasis, projector,
-        # particle, PositionBasis, MomentumBasis, samplepoints, spacing, gaussianstate,
-        #         position, momentum, potentialoperator, transform,
+        particle, PositionBasis, MomentumBasis, samplepoints, spacing, gaussianstate,
+                position, momentum, potentialoperator, transform,
         nlevel, NLevelBasis, transition, nlevelstate,
         # manybody, ManyBodyBasis, fermionstates, bosonstates,
         #         manybodyoperator, onebodyexpect, occupation,
         metrics, tracenorm, tracenorm_h, tracenorm_nh,
                 tracedistance, tracedistance_h, tracedistance_nh,
                 entropy_vn, fidelity, ptranspose, PPT,
-                negativity, logarithmic_negativity
-        # PauliBasis, PauliTransferMatrix, DensePauliTransferMatrix,
-        #         ChiMatrix, DenseChiMatrix
+                negativity, logarithmic_negativity,
+        PauliBasis, PauliTransferMatrix, DensePauliTransferMatrix,
+                ChiMatrix, DenseChiMatrix
 
 include("sortedindices.jl")
 include("polynomials.jl")
@@ -50,12 +50,12 @@ include("spin.jl")
 include("fock.jl")
 include("state_definitions.jl")
 include("subspace.jl")
-# include("particle.jl")
+include("particle.jl")
 include("nlevel.jl")
 # include("manybody.jl")
 # include("transformations.jl")
 include("metrics.jl")
-# include("pauli.jl")
+include("pauli.jl")
 # include("printing.jl")
 
 end # module

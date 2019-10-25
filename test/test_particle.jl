@@ -28,9 +28,19 @@ sigma_p = 1.0/(sigma*sqrt(2))
 
 psi0_bx = gaussianstate(basis_position, x0, p0, sigma)
 psi0_bp = gaussianstate(basis_momentum, x0, p0, sigma)
-
 @test 1 ≈ norm(psi0_bx)
 @test 1 ≈ norm(psi0_bp)
+
+psi_x = transform(basis_position,basis_momentum)*psi0_bp
+psi_p = transform(basis_momentum,basis_position)*psi0_bx
+@test 1 ≈ abs(psi0_bx'*psi_x)
+@test 1 ≈ abs(psi0_bp'*psi_p)
+
+bra_x = psi0_bp'*transform(basis_momentum,basis_position)
+bra_p = psi0_bx'*transform(basis_position,basis_momentum)
+@test 1 ≈ abs(bra_x*psi0_bx)
+@test 1 ≈ abs(bra_p*psi0_bp)
+
 
 p_bx = momentum(basis_position)
 x_bx = position(basis_position)

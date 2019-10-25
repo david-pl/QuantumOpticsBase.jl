@@ -10,7 +10,7 @@ using QuantumOpticsBase
 # Test conversion of unitary matrices to superoperators.
 q2 = PauliBasis(2)
 q3 = PauliBasis(3)
-CZ = DenseOperator(q2, q2, diagm(0 => [1,1,1,-1]))
+CZ = Operator(q2, q2, diagm(0 => ComplexF64[1,1,1,-1]))
 CZ_sop = SuperOperator(CZ)
 
 # Test conversion of unitary matrices to superoperators.
