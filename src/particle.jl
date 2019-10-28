@@ -356,7 +356,7 @@ function transform(basis_l::MomentumBasis, basis_r::PositionBasis; ket_only::Boo
         @inbounds for i=1:M
             result[i] = conj(result[i]) * mul_before[i]
         end
-        return vec
+        return result
     end
 
     data = LinearMap{ComplexF64}(_fft_mul!, _bfft_mul!, N, M; ismutating=true)
@@ -407,7 +407,7 @@ function transform(basis_l::PositionBasis, basis_r::MomentumBasis; ket_only::Boo
         @inbounds for i=1:M
             result[i] = conj(result[i]) * mul_before[i]
         end
-        return vec
+        return result
     end
 
     data = LinearMap{ComplexF64}(_fft_mul!, _bfft_mul!, N, M; ismutating=true)
@@ -529,7 +529,7 @@ end
 # end
 
 const LinMapOp = Operator{<:Basis,<:Basis,<:LinearMap}
-dense(op::LinMapOp) = op*identityoperator(Operator, op.basis_r)
+dense(op::LinMapOp) = op*Operator(op.basis_r, op.basis_r, Matrix{ComplexF64}(I, length(op.basis_r), length(op.basis_r)))
 
 dagger(op::LinMapOp) = transform(op.basis_r, op.basis_l)
 
@@ -537,12 +537,23 @@ dagger(op::LinMapOp) = transform(op.basis_r, op.basis_l)
 # tensor(A::FFTKets, B::FFTKets) = transform(tensor(A.basis_l, B.basis_l), tensor(A.basis_r, B.basis_r); ket_only=true)
 
 function gemv!(alpha, M::Operator{B1,B2,<:LinearMap}, b::Ket{B2}, beta, result::Ket{B1}) where {B1<:Basis,B2<:Basis}
+    # if beta==0
+    #     M.data.f(result.data,b.data)
+    #     rmul!(result.data,alpha)
+    # else
+    #     psi_ = Ket(M.basis_l, copy(b.data))
+    #     M.data.f(psi_.data,b.data)
+    #     rmul!(psi_.data, alpha)
+    #     rmul!(result.data, beta)
+    #     result.data .+= psi_.data
+    # end
     LinearMaps.mul!(result.data,M.data,b.data,alpha,beta)
     return nothing
 end
 
 function gemv!(alpha, b::Bra{B1}, M::Operator{B1,B2,<:LinearMap}, beta, result::Bra{B2}) where {B1<:Basis,B2<:Basis}
-    LinearMaps.mul!(result.data,transpose(M.data),b.data,alpha,beta)
+    # TODO: better handling of adjoint
+    LinearMaps.mul!(result.data,M.data',b.data,alpha,beta)
     return nothing
 end
 
@@ -583,7 +594,28 @@ end
 # end
 
 function gemm!(alpha, A::Operator{B1,B2}, B::Operator{B2,B3,<:LinearMap}, beta, result::Operator{B1,B3}) where {B1<:Basis,B2<:Basis,B3<:Basis}
-    LinearMaps.mul!(result.data,transpose(B.data),transpose(A.data),alpha,beta)
+    # LinearMaps.mul!(result.data,B.data',transpose(A.data),alpha,beta)
+    if beta==0
+        A_ = adjoint(A)
+        result_ = adjoint(result)
+        @inbounds @views for k=1:length(A.basis_l)
+            B.data.fc(result_.data[:,k],A_.data[:,k])
+        end
+        # conj!(result.data)
+        rmul!(result.data, alpha)
+    else
+        op_ = Operator(result.basis_l,result.basis_r,similar(result.data))
+        @inbounds @views for k=1:length(A.basis_l)
+            B.data.fc(op_.data[:,k],A.data[:,k])
+        end
+        conj!(op_.data)
+        rmul!(op_.data, alpha)
+        rmul!(result.data, beta)
+        result.data .+= op_.data
+    end
+
+    # result.data .= transpose(result.data)
+    # result.data .= adjoint(result.data)
     nothing
 end
 function gemm!(alpha, A::Operator{B1,B2,<:LinearMap}, B::Operator{B2,B3}, beta, result::Operator{B1,B3}) where {B1<:Basis,B2<:Basis,B3<:Basis}

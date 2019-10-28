@@ -171,22 +171,22 @@ rho0_xp = tensor(psi0_bx, dagger(psi0_bp))
 rho0_px = tensor(psi0_bp, dagger(psi0_bx))
 rho0_pp = tensor(psi0_bp, dagger(psi0_bp))
 
-rho_ = DenseOperator(basis_momentum, basis_position)
+rho_ = Operator(basis_momentum, basis_position)
 QuantumOpticsBase.gemm!(Complex(1.), Tpx, rho0_xx, Complex(0.), rho_)
 @test 1e-12 > D(rho_, rho0_px)
 @test 1e-12 > D(Tpx*rho0_xx, rho0_px)
 
-rho_ = DenseOperator(basis_position, basis_momentum)
+rho_ = Operator(basis_position, basis_momentum)
 QuantumOpticsBase.gemm!(Complex(1.), rho0_xx, Txp, Complex(0.), rho_)
 @test 1e-12 > D(rho_, rho0_xp)
 @test 1e-12 > D(rho0_xx*Txp, rho0_xp)
 
-rho_ = DenseOperator(basis_momentum, basis_momentum)
+rho_ = Operator(basis_momentum, basis_momentum)
 QuantumOpticsBase.gemm!(Complex(1.), Tpx, rho0_xp, Complex(0.), rho_)
 @test 1e-12 > D(rho_, rho0_pp)
 @test 1e-12 > D(Tpx*rho0_xx*Txp, rho0_pp)
 
-rho_ = DenseOperator(basis_momentum, basis_momentum)
+rho_ = Operator(basis_momentum, basis_momentum)
 QuantumOpticsBase.gemm!(Complex(1.), rho0_px, Txp, Complex(0.), rho_)
 @test 1e-12 > D(rho_, rho0_pp)
 @test 1e-12 > D(Txp*rho0_pp*Tpx, rho0_xx)
@@ -197,24 +197,24 @@ beta = complex(-1.2)
 randdata1 = rand(ComplexF64, N, N)
 randdata2 = rand(ComplexF64, N, N)
 
-op = DenseOperator(basis_position, basis_position, randdata1)
-result_ = DenseOperator(basis_momentum, basis_position, copy(randdata2))
+op = Operator(basis_position, basis_position, randdata1)
+result_ = Operator(basis_momentum, basis_position, copy(randdata2))
 result0 = alpha*dense(Tpx)*op + beta*result_
 QuantumOpticsBase.gemm!(alpha, Tpx, op, beta, result_)
 @test 1e-11 > D(result0, result_)
 
-result_ = DenseOperator(basis_position, basis_momentum, copy(randdata2))
+result_ = Operator(basis_position, basis_momentum, copy(randdata2))
 result0 = alpha*op*dense(Txp) + beta*result_
 QuantumOpticsBase.gemm!(alpha, op, Txp, beta, result_)
 @test 1e-11 > D(result0, result_)
 
-op = DenseOperator(basis_momentum, basis_momentum, randdata1)
-result_ = DenseOperator(basis_position, basis_momentum, copy(randdata2))
+op = Operator(basis_momentum, basis_momentum, randdata1)
+result_ = Operator(basis_position, basis_momentum, copy(randdata2))
 result0 = alpha*dense(Txp)*op + beta*result_
 QuantumOpticsBase.gemm!(alpha, Txp, op, beta, result_)
 @test 1e-11 > D(result0, result_)
 
-result_ = DenseOperator(basis_momentum, basis_position, copy(randdata2))
+result_ = Operator(basis_momentum, basis_position, copy(randdata2))
 result0 = alpha*op*dense(Tpx) + beta*result_
 QuantumOpticsBase.gemm!(alpha, op, Tpx, beta, result_)
 @test 1e-11 > D(result0, result_)
