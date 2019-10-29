@@ -47,21 +47,21 @@ dense(x::Operator) = Operator(x.basis_l,x.basis_r,Matrix(x.data))
 #     gemm!(Complex(1.), op1, op2, Complex(0.), result)
 #     return result
 # end
-function *(op::AbstractOperator{BL,BR}, psi::Ket{BR}) where {BL<:Basis,BR<:Basis}
-    result = Ket{BL}(op.basis_l)
-    gemv!(Complex(1.), op, psi, Complex(0.), result)
-    return result
-end
-function *(psi::Bra{BL}, op::AbstractOperator{BL,BR}) where {BL<:Basis,BR<:Basis}
-    result = Bra{BR}(op.basis_r)
-    gemv!(Complex(1.), psi, op, Complex(0.), result)
-    return result
-end
+# function *(op::AbstractOperator{BL,BR}, psi::Ket{BR}) where {BL<:Basis,BR<:Basis}
+#     result = Ket{BL}(op.basis_l)
+#     gemv!(Complex(1.), op, psi, Complex(0.), result)
+#     return result
+# end
+# function *(psi::Bra{BL}, op::AbstractOperator{BL,BR}) where {BL<:Basis,BR<:Basis}
+#     result = Bra{BR}(op.basis_r)
+#     gemv!(Complex(1.), psi, op, Complex(0.), result)
+#     return result
+# end
 
 /(a::Operator, b::Number) = Operator(a.basis_l, a.basis_r, a.data ./ b)
 
 
-dagger(x::Operator) = Operator(x.basis_r, x.basis_l, x.data')
+dagger(x::Operator{B1,B2,<:AbstractMatrix}) where {B1,B2} = Operator(x.basis_r, x.basis_l, x.data')
 
 ishermitian(A::Operator) = false
 ishermitian(A::Operator{B,B}) where B<:Basis = ishermitian(A.data)

@@ -528,7 +528,7 @@ end
 #     end
 # end
 
-const LinMapOp = Operator{<:Basis,<:Basis,<:LinearMap}
+const LinMapOp{B1,B2} = Operator{B1,B2,<:LinearMap}
 dense(op::LinMapOp) = op*Operator(op.basis_r, op.basis_r, Matrix{ComplexF64}(I, length(op.basis_r), length(op.basis_r)))
 
 dagger(op::LinMapOp) = transform(op.basis_r, op.basis_l)
@@ -554,73 +554,95 @@ end
 function gemv!(alpha, b::Bra{B1}, M::Operator{B1,B2,<:LinearMap}, beta, result::Bra{B2}) where {B1<:Basis,B2<:Basis}
     # TODO: better handling of adjoint
     LinearMaps.mul!(result.data,M.data',b.data,alpha,beta)
+    # conj!(b.data)
+    # if beta==0
+    #     M.data.fc(result.data,b.data)
+    #     rmul!(result.data,alpha)
+    # else
+    #     psi_ = Bra(M.basis_r, copy(b.data))
+    #     M.data.fc(psi_.data,b.data)
+    #     rmul!(psi_.data,alpha)
+    #     rmul!(result.data,beta)
+    #     result.data .+= psi_.data
+    # end
     return nothing
 end
 
-# function *(M::Operator{B1,B2,<:LinearMap},b::Ket{B2}) where {B1,B2}
-#     result = Ket(M.basis_l)
-#     gemv!(1.0,M,b,0.0,result)
-#     return result
-# end
-# function *(b::Bra{B1},M::Operator{B1,B2,<:LinearMap}) where {B1,B2}
-#     result = Ket(M.basis_r)
-#     gemv!(1.0,b,M,0.0,result)
-#     return result
-# end
+function *(M::Operator{B1,B2,<:LinearMap},b::Ket{B2}) where {B1,B2}
+    result = Ket(M.basis_l)
+    gemv!(1.0,M,b,0.0,result)
+    return result
+end
+function *(b::Bra{B1},M::Operator{B1,B2,<:LinearMap}) where {B1,B2}
+    result = Bra(M.basis_r)
+    gemv!(1.0,b,M,0.0,result)
+    return result
+end
 
 # function gemv!(alpha_, b::Bra{B1}, M::FFTOperator{B1,B2}, beta_, result::Bra{B2}) where {B1<:Basis,B2<:Basis}
 #     alpha = convert(ComplexF64, alpha_)
 #     beta = convert(ComplexF64, beta_)
 #     N::Int = length(M.basis_l)
-#     if beta==Complex(0.)
-#         @inbounds for i=1:N
-#             result.data[i] = conj(M.mul_after[i]) * conj(b.data[i])
-#         end
-#         M.fft_l! * reshape(result.data, size(M.mul_after))
-#         @inbounds for i=1:N
-#             result.data[i] = conj(result.data[i]) * M.mul_before[i] * alpha
-#         end
-#     else
-#         psi_ = Bra(M.basis_r, conj(b.data))
-#         @inbounds for i=1:N
-#             psi_.data[i] *= conj(M.mul_after[i])
-#         end
-#         M.fft_l! * reshape(psi_.data, size(M.mul_after))
-#         @inbounds for i=1:N
-#             result.data[i] = beta*result.data[i] + alpha * conj(psi_.data[i]) * M.mul_before[i]
-#         end
-#     end
+    # if beta==Complex(0.)
+    #     @inbounds for i=1:N
+    #         result.data[i] = conj(M.mul_after[i]) * conj(b.data[i])
+    #     end
+    #     M.fft_l! * reshape(result.data, size(M.mul_after))
+    #     @inbounds for i=1:N
+    #         result.data[i] = conj(result.data[i]) * M.mul_before[i] * alpha
+    #     end
+    # else
+    #     psi_ = Bra(M.basis_r, conj(b.data))
+    #     @inbounds for i=1:N
+    #         psi_.data[i] *= conj(M.mul_after[i])
+    #     end
+    #     M.fft_l! * reshape(psi_.data, size(M.mul_after))
+    #     @inbounds for i=1:N
+    #         result.data[i] = beta*result.data[i] + alpha * conj(psi_.data[i]) * M.mul_before[i]
+    #     end
+    # end
 #     nothing
 # end
 
-function gemm!(alpha, A::Operator{B1,B2}, B::Operator{B2,B3,<:LinearMap}, beta, result::Operator{B1,B3}) where {B1<:Basis,B2<:Basis,B3<:Basis}
-    # LinearMaps.mul!(result.data,B.data',transpose(A.data),alpha,beta)
-    if beta==0
-        A_ = adjoint(A)
-        result_ = adjoint(result)
-        @inbounds @views for k=1:length(A.basis_l)
-            B.data.fc(result_.data[:,k],A_.data[:,k])
-        end
-        # conj!(result.data)
-        rmul!(result.data, alpha)
-    else
-        op_ = Operator(result.basis_l,result.basis_r,similar(result.data))
-        @inbounds @views for k=1:length(A.basis_l)
-            B.data.fc(op_.data[:,k],A.data[:,k])
-        end
-        conj!(op_.data)
-        rmul!(op_.data, alpha)
-        rmul!(result.data, beta)
-        result.data .+= op_.data
-    end
-
-    # result.data .= transpose(result.data)
-    # result.data .= adjoint(result.data)
-    nothing
-end
+# function gemm!(alpha, A::Operator{B1,B2}, B::Operator{B2,B3,<:LinearMap}, beta, result::Operator{B1,B3}) where {B1<:Basis,B2<:Basis,B3<:Basis}
+#     # LinearMaps.mul!(result.data,B.data',transpose(A.data),alpha,beta)
+#     # if beta==0
+#     #     A_ = adjoint(A)
+#     #     result_ = adjoint(result)
+#     #     @inbounds @views for k=1:length(A.basis_l)
+#     #         B.data.fc(result_.data[:,k],A_.data[:,k])
+#     #     end
+#     #     # conj!(result.data)
+#     #     rmul!(result.data, alpha)
+#     # else
+#     #     op_ = Operator(result.basis_l,result.basis_r,similar(result.data))
+#     #     @inbounds @views for k=1:length(A.basis_l)
+#     #         B.data.fc(op_.data[:,k],A.data[:,k])
+#     #     end
+#     #     conj!(op_.data)
+#     #     rmul!(op_.data, alpha)
+#     #     rmul!(result.data, beta)
+#     #     result.data .+= op_.data
+#     # end
+#
+#     # result.data .= transpose(result.data)
+#     # result.data .= adjoint(result.data)
+#     nothing
+# end
 function gemm!(alpha, A::Operator{B1,B2,<:LinearMap}, B::Operator{B2,B3}, beta, result::Operator{B1,B3}) where {B1<:Basis,B2<:Basis,B3<:Basis}
     LinearMaps.mul!(result.data,A.data,B.data,alpha,beta)
     nothing
+end
+
+# Multiplication for Operators in terms of their gemv! implementation
+# TODO: better Matrix-LinearMap multiplication here
+function gemm!(alpha, b::Operator{B1,B2}, M::LinMapOp{B2,B3}, beta, result::Operator{B1,B3}) where {B1<:Basis,B2<:Basis,B3<:Basis}
+    @views @inbounds for i=1:size(b.data, 1)
+        bbra = Bra(b.basis_r, vec(b.data[i,:]))
+        resultbra = Bra(M.basis_r, vec(result.data[i,:]))
+        gemv!(alpha, bbra, M, beta, resultbra)
+        result.data[i,:] = resultbra.data
+    end
 end
 
 function *(M::Operator{B1,B2,<:LinearMap},b::Operator{B2,B3,T}) where {B1,B2,B3,T}
