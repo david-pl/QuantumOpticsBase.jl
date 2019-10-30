@@ -234,8 +234,8 @@ QuantumOpticsBase.gemv!(Complex(1.), LazyProduct(Txp, id, Tpx), psi0_bx, Complex
 @test 1e-12 > norm(Txp*id*(Tpx*psi0_bx) - psi0_bx)
 
 # Test dense FFT operator
-Txp_dense = DenseOperator(Txp)
-Tpx_dense = DenseOperator(Tpx)
+Txp_dense = dense(Txp)
+Tpx_dense = dense(Tpx)
 @test isa(Txp_dense, DenseOperator)
 @test isa(Tpx_dense, DenseOperator)
 @test 1e-5 > D(Txp_dense*rho0_pp*Tpx_dense, rho0_xx)

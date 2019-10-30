@@ -1,6 +1,8 @@
 import Base: ==, +, -, *, /, Broadcast
 using Base.Cartesian
 
+const MatrixOperator{BL,BR} = Operator{BL,BR,<:AbstractMatrix}
+
 Operator{BL,BR}(b1::BL, b2::BR, data::T) where {BL<:Basis,BR<:Basis,T<:Matrix{ComplexF64}} = Operator{BL,BR,T}(b1, b2, data)
 Operator(b1::BL, b2::BR, data::T) where {BL<:Basis,BR<:Basis,T<:Matrix{ComplexF64}} = Operator{BL,BR,T}(b1, b2, data)
 Operator(b1::Basis, b2::Basis) = Operator(b1, b2, zeros(ComplexF64, length(b1), length(b2)))
@@ -66,7 +68,7 @@ dagger(x::Operator{B1,B2,<:AbstractMatrix}) where {B1,B2} = Operator(x.basis_r, 
 ishermitian(A::Operator) = false
 ishermitian(A::Operator{B,B}) where B<:Basis = ishermitian(A.data)
 
-tensor(a::DataOperator, b::DataOperator) = Operator(tensor(a.basis_l, b.basis_l), tensor(a.basis_r, b.basis_r), kron(b.data, a.data))
+tensor(a::MatrixOperator, b::MatrixOperator) = Operator(tensor(a.basis_l, b.basis_l), tensor(a.basis_r, b.basis_r), kron(b.data, a.data))
 
 conj(a::Operator) = Operator(a.basis_l, a.basis_r, conj(a.data))
 conj!(a::Operator) = conj!(a.data)

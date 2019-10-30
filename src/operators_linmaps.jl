@@ -63,14 +63,15 @@ function *(b::Operator{B3,B1,T}, M::Operator{B1,B2,<:LinearMap}) where {B1,B2,B3
     return result
 end
 
-# TODO: Replace usage of LazyArrays altogether?
-function LazyOperator(f::typeof(+),a::Operator{B1,B2},b::LinMapOp{B1,B2}) where {B1,B2}
+# LazyOperator for operators that do not have a direct matrix representation
+function LazyOperator(f::AddFunc,a::Operator{B1,B2},b::Operator{B1,B2}) where {B1,B2}
     vec_ket = Ket(b.basis_r)
     result_ket = Ket(b.basis_l)
+    α = f(1.0) # addition or subtraction
     function func_r(result,vec)
         copyto!(vec_ket.data,vec)
         # b*vec
-        gemv!(1.0,b,vec_ket,0.0,result_ket)
+        gemv!(α,b,vec_ket,0.0,result_ket)
         # a*vec + b*vec
         gemv!(1.0,a,vec_ket,1.0,result_ket)
         copyto!(result,result_ket.data)
@@ -81,7 +82,7 @@ function LazyOperator(f::typeof(+),a::Operator{B1,B2},b::LinMapOp{B1,B2}) where 
     function func_l(result,vec)
         copyto!(vec_bra.data,vec)
         # vec'*b
-        gemv!(1.0,vec_bra,b,0.0,result_bra)
+        gemv!(α,vec_bra,b,0.0,result_bra)
         # vec'*a + vec'*b
         gemv!(1.0,vec_bra,a,1.0,result_bra)
         copyto!(result,result_bra.data)
@@ -92,58 +93,40 @@ function LazyOperator(f::typeof(+),a::Operator{B1,B2},b::LinMapOp{B1,B2}) where 
     return Operator(b.basis_l, b.basis_r, data)
 end
 
-function LazyOperator(f::typeof(-),a::Operator{B1,B2},b::LinMapOp{B1,B2}) where {B1,B2}
+
+function LazyOperator(f::typeof(*),a::Operator{B1,B2},b::Operator{B2,B3}) where {B1,B2,B3}
     vec_ket = Ket(b.basis_r)
-    result_ket = Ket(b.basis_l)
-    function func_r(result,vec)
-        copyto!(vec_ket.data,vec)
-        # b*vec
-        gemv!(-1.0,b,vec_ket,0.0,result_ket)
-        # a*vec + b*vec
-        gemv!(1.0,a,vec_ket,1.0,result_ket)
-        copyto!(result,result_ket.data)
-    end
-
-    vec_bra = Bra(b.basis_l)
-    result_bra = Bra(b.basis_r)
-    function func_l(result,vec)
-        copyto!(vec_bra.data,vec)
-        # vec'*b
-        gemv!(-1.0,vec_bra,b,0.0,result_bra)
-        # vec'*a + vec'*b
-        gemv!(1.0,vec_bra,a,1.0,result_bra)
-        copyto!(result,result_bra.data)
-    end
-
-    dtype = promote_type(eltype(a.data),eltype(b.data))
-    data = LinearMap{dtype}(func_r, func_l, length(b.basis_l), length(b.basis_r); ismutating=true)
-    return Operator(b.basis_l, b.basis_r, data)
-end
-
-function LazyOperator(f::typeof(*),a::Operator{B1,B2},b::LinMapOp{B2,B3}) where {B1,B2,B3}
-    vec_ket = Ket(b.basis_r)
+    tmp_ket = Ket(a.basis_r)
     result_ket = Ket(a.basis_l)
     function func_r(result,vec)
         copyto!(vec_ket.data,vec)
         # b*vec
-        gemv!(1.0,b,vec_ket,0.0,result_ket)
-        # a*vec + b*vec
-        gemv!(1.0,a,result_ket,0.0,result_ket)
+        gemv!(1.0,b,vec_ket,0.0,tmp_ket)
+        # a*b*vec
+        gemv!(1.0,a,tmp_ket,0.0,result_ket)
         copyto!(result,result_ket.data)
     end
 
-    vec_bra = Bra(b.basis_l)
+    vec_bra = Bra(a.basis_l)
+    tmp_bra = Bra(b.basis_l)
     result_bra = Bra(b.basis_r)
     function func_l(result,vec)
         copyto!(vec_bra.data,vec)
-        # vec'*b
-        gemv!(1.0,vec_bra,b,0.0,result_bra)
-        # vec'*a + vec'*b
-        gemv!(1.0,result_bra,a,0.0,result_bra)
+        # vec'*a
+        gemv!(1.0,vec_bra,a,0.0,tmp_bra)
+        # vec'*a*b
+        gemv!(1.0,tmp_bra,b,0.0,result_bra)
         copyto!(result,result_bra.data)
     end
 
     dtype = promote_type(eltype(a.data),eltype(b.data))
     data = LinearMap{dtype}(func_r, func_l, length(a.basis_l), length(b.basis_r); ismutating=true)
-    return Operator(b.basis_l, b.basis_r, data)
+    return Operator(a.basis_l, b.basis_r, data)
 end
+
+LazyOperator(f::Function,a,b,c) = LazyOperator(f,a,LazyOperator(f,b,c))
+
+# TODO: Lazy tensor implementation for Operators without matrix representation
+# Can be done once https://github.com/Jutho/LinearMaps.jl/pull/61 is merged in LinearMaps
+# Current workaround for operators where data is <: LinearMap is to define the
+# map directly on CompositeBasis
